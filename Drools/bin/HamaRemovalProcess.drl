@@ -1,0 +1,163 @@
+#created on: Apr 9, 2012
+package com.sample
+
+#list any import classes here.
+import com.sample.ReconciliationBean;
+import com.sample.RuleDVO;
+
+rule "Removal - Combined Stmt Ind = 6 update to 5"
+	salience 800
+	when 
+		$a : ReconciliationBean(combinedStatementIndicator == 6)
+		$b : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList)		
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("67");
+		$ruleDVO.setFieldOldVale($a.getCombinedStatementIndicator() + "");
+		$ruleDVO.setFieldNewValue("5");
+		$ruleDVO.setFieldName("combinedStatementIndicator");
+		shawUpdatesList.add($ruleDVO);		
+		//correctionsList.add($ruleDVO);
+		//eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);	
+end
+
+rule "Removal - If Phone Flag Not 4, change to 4"
+	salience 790
+	when 
+		$a : ReconciliationBean(phoneFlag != "4")
+		$b : ReconciliationBean(eventMap : eventMap, shawUpdatesList : shawUpdatesList)		
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("68");
+		$ruleDVO.setFieldOldVale($a.getPhoneFlag());
+		$ruleDVO.setFieldNewValue("4");
+		$ruleDVO.setFieldName("phoneFlag");
+		shawUpdatesList.add($ruleDVO);		
+		//correctionsList.add($ruleDVO);
+		//eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);
+end 
+
+rule "Removal - Update HAMA Indicator on the LCA from Y to N "
+	salience 780
+	when 
+		$a : ReconciliationBean(hamaIndicator != "N")
+		$b : ReconciliationBean(eventMap : eventMap, shawUpdatesList : shawUpdatesList)		
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("69");
+		$ruleDVO.setFieldOldVale($a.getHamaIndicator());
+		$ruleDVO.setFieldNewValue("N");
+		$ruleDVO.setFieldName("hamaIndicator");
+		shawUpdatesList.add($ruleDVO);		
+		eventMap.put("SHAWUPDATES", shawUpdatesList);		
+end
+
+rule "Removal - Change Slide Code to XXXXXX "
+	salience 770
+	when 
+		$a : ReconciliationBean(slidCode == "SINGLE")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("70");
+		$ruleDVO.setFieldOldVale($a.getSlidCode());
+		$ruleDVO.setFieldNewValue("XXXXXX");
+		$ruleDVO.setFieldName("slidCode");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Removal - Check person code is = Change person code = last digit of Mtg account"
+	salience 760
+	when 
+		$a : ReconciliationBean(personCode == "=")		
+		$c : ReconciliationBean(slidCode == "SINGLE" || == "NYCEMA" || == "NYMECA")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList, acctNum : firstMortgageAccountNumber)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("71");
+		$ruleDVO.setFieldOldVale($a.getPersonCode());
+		$ruleDVO.setFieldNewValue(acctNum.substring(acctNum.length()-1, acctNum.length()));
+		$ruleDVO.setFieldName("personCode");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);	
+end
+
+/*
+rule "Removal - Update Person Code on 1st Mortgage from = B, F and 0 to 9  no update needed"
+	salience 750
+	when 
+		$a : ReconciliationBean(personCode == "B" || == "F" || == "0" || == "1" || == "2" || == "3" || == "4" || == "5"  || == "6"|| == "7" || == "8" || == "9")	
+		$b : ReconciliationBean(code : personCode)
+	then 
+		$a.setPersonCode(code);
+end
+*/
+
+rule "Removal - Update Bill Mode on 1st Mortgage from 7 to 9"
+	salience 740
+	when
+		$a : ReconciliationBean(billMode == "7")
+		$c : ReconciliationBean(slidCode == "SINGLE" || == "NYCEMA" || == "NYMECA")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 	
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("72");
+		$ruleDVO.setFieldOldVale($a.getBillMode());
+		$ruleDVO.setFieldNewValue("9");
+		$ruleDVO.setFieldName("billMode");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Removal - Update Bill Cycle on 1st Mortgage to 000 "
+	salience 730
+	when
+		$a : ReconciliationBean(billCycle == "H20" || == "H01" || == "SSR")
+		$c : ReconciliationBean(slidCode == "SINGLE" || == "NYCEMA" || == "NYMECA")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("73");
+		$ruleDVO.setFieldOldVale($a.getBillCycle());
+		$ruleDVO.setFieldNewValue("000");
+		$ruleDVO.setFieldName("BillCycle");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("73A");
+		$ruleDVO.setFieldOldVale($a.getNote());
+		$ruleDVO.setFieldNewValue("1st Mortgage Account Home Asset indicators have been removed");
+		$ruleDVO.setFieldName("Note");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Removal - Note 1st Mortgage Account - Home Asset indicators have been removed"
+	salience 720
+	when
+		$a : ReconciliationBean(billCycle != "H20" && != "H01" && != "SSR")
+		$c : ReconciliationBean(slidCode == "SINGLE" || == "NYCEMA" || == "NYMECA")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("74");
+		$ruleDVO.setFieldOldVale($a.getNote());
+		$ruleDVO.setFieldNewValue("1st Mortgage Account Home Asset indicators have been removed");
+		$ruleDVO.setFieldName("Note");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);	
+end
+
+

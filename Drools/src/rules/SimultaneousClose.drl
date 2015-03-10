@@ -1,0 +1,89 @@
+#created on: Mar 29, 2012
+package com.sample
+
+#list any import classes here.
+import com.sample.ReconciliationBean;
+import com.sample.RuleDVO;
+
+rule "Verify QPC/AR indicators are populated with Y, N, E, or I "
+	salience 100
+	when 
+		$a : ReconciliationBean(qpcarIndicator != "II" && != "YI" && != "NI" && != "YE" && != "YY" && != "YN" && != "NE" && != "NY" && != "NN")
+		$b : ReconciliationBean(eventMap : eventMap, alertsList : alertsList)
+		$ruleDVO : RuleDVO()		
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("11");
+		$ruleDVO.setFieldOldVale($a.getQpcarIndicator());
+		$ruleDVO.setFieldName("qpcarIndicator");
+		alertsList.add($ruleDVO);
+		eventMap.put("ALERTS", alertsList);
+end
+
+rule "If phone flag equal to 4 and HAMA Indicator is equal to Y, update phone flag to 2 "
+	salience 90
+	when 
+		$a : ReconciliationBean(phoneFlag == "4" && hamaIndicator == "Y")
+		$b : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("43");
+		$ruleDVO.setFieldOldVale($a.getPhoneFlag());
+		$ruleDVO.setFieldNewValue("2");
+		$ruleDVO.setFieldName("phoneFlag");
+		correctionsList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);
+end
+
+rule "Verify Phone Flag, on LCA, is 2 - Report an Alert"
+	salience 80
+	when 
+		$a : ReconciliationBean(phoneFlag == "2")
+		$b : ReconciliationBean(eventMap : eventMap, alertsList : alertsList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("11");
+		$ruleDVO.setFieldOldVale($a.getPhoneFlag());
+		$ruleDVO.setFieldName("phoneFlag");		
+		alertsList.add($ruleDVO);
+		eventMap.put("ALERTS", alertsList);
+end
+
+rule "Appraisal Type, on LCA, should not be blank or null"
+	salience 70
+	when 
+		$a : ReconciliationBean(appraisalType == "" || appraisalType == null)
+		$b : ReconciliationBean(eventMap : eventMap, alertsList : alertsList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("13");
+		$ruleDVO.setFieldOldVale($a.getAppraisalType());
+		$ruleDVO.setFieldName("appraisalType");		
+		alertsList.add($ruleDVO);
+		eventMap.put("ALERTS", alertsList);
+end
+
+rule "Verify Property Value = 0 AND, appraisedValue != 0 OR purchasePrice != 0"
+	salience 60
+	when 
+		$a : ReconciliationBean( (propertyValue == 0) && (appraisedValue != 0 || purchasePrice != 0) )
+		$c : ReconciliationBean(minPrice : minimumPrice)
+		$b : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("14");
+		$ruleDVO.setFieldOldVale($a.getPropertyValue() + "");
+		$ruleDVO.setFieldNewValue(minPrice +"");
+		$ruleDVO.setFieldName("propertyValue");
+		correctionsList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);		
+end
+

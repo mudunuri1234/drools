@@ -1,0 +1,67 @@
+package com.sample
+
+#list any import classes here.
+import com.sample.Room;
+import com.sample.Sprinkler;
+import com.sample.Fire;
+
+#declare any global variables here
+
+rule "When there is a fire turn on the sprinkler"
+	when
+		Fire($room : room)
+		$sprinkler : Sprinkler(room == $room, on == false)
+	then 
+		$sprinkler.setOn(true);
+		System.out.println("Turn on the sprinkler for room " );
+end
+
+rule "Raise the alarm when we have one or more fires"
+	when
+		exists Fire()
+	then
+		new Alarm();
+		System.out.println( "Raise the alarm" );
+end
+
+rule "When the fire is gone turn off the sprinkler"
+	when
+		$room : Room()
+		$sprinkler : Sprinkler(room == $room, on == true )
+		not Fire( room == $room )
+	then
+		$sprinkler.setOn(false);
+		System.out.println("Turn off the sprinkler for room "+$room.getName());
+end
+
+
+rule "Status output when things are ok"
+salience 1
+	when
+		not Alarm()
+		not Sprinkler(on == true)
+	then
+		System.out.println("Everything is ok");
+end
+
+
+//Cross Product - Cartesian Product
+rule "Cartesian Product - show sprinklers in rooms"
+salience 10
+	when
+		$room : Room()
+		$sprinkler : Sprinkler()
+	then
+		System.out.println(" Cartesian Product room:" + $room.getName() + " sprinkler:" + $sprinkler.getRoom().getName());
+end
+
+//Cross Product - Using join
+rule "Join - show sprinklers in rooms2"
+salience 9
+	when
+		$room : Room()
+		$sprinkler : Sprinkler(room == $room)
+	then
+		System.out.println( "Using join room:" + $room.getName() + " sprinkler:" + $sprinkler.getRoom().getName() );
+end
+

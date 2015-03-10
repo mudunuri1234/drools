@@ -1,0 +1,38 @@
+#created on: Mar 29, 2012
+package com.sample
+
+#list any import classes here.
+import com.sample.ReconciliationBean;
+
+#declare any global variables here
+
+rule "Determine Type is SIMO and with in 60 days"	
+	no-loop true
+	when
+		$a : ReconciliationBean(accountType == "SIMO" && deltaDays <= 60)
+	then		
+		//log("--- Account Type is in DRL SIMO ---" + $a.getAccountType() + "--- deltaDays ***" + $a.getDeltaDays());
+		$a.setDetermineTypeAction("SIMO");
+end
+
+rule "Determine Type is TLL and it is more than 60 days"	
+	no-loop true
+	when
+		$a : ReconciliationBean(accountType == "TLL" && deltaDays >= 60)
+	then 
+		//log("--- Account Type is in DRL TLL ---" + $a.getAccountType() + "--- deltaDays ---" + $a.getDeltaDays());
+		$a.setDetermineTypeAction("TLL");		
+end
+
+rule "Determine Type is MOD/HAREFI and it is more than 60 days"	
+	no-loop true
+	when
+		$a : ReconciliationBean((accountType == "MOD" || == "HAREFI") && deltaDays >= 60)
+	then 
+		//log("--- Account Type is in DRL MOD---" + $a.getAccountType() + "--- deltaDays ---" + $a.getDeltaDays());
+		$a.setDetermineTypeAction("MOD");		
+end
+
+function void log(String name) {
+	System.out.println(name);
+}

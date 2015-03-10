@@ -1,0 +1,46 @@
+package com.sample;
+
+#generated from Decision Table
+import com.sample.Status;
+import com.sample.StatusOutput;
+
+# rule values at C11, header at C6
+rule "BenefitStatus_11"
+	when
+		Status(status == "P")
+	then
+		StatusOutput.action="POST_AND_SUSPEND_PLAN";
+end
+
+# rule values at C12, header at C6
+rule "BenefitStatus_12"
+	when
+		Status(status == "D")
+	then
+		StatusOutput.action="POST";
+end
+
+# rule values at C13, header at C6
+rule "BenefitStatus_13"
+	when
+		Status(status == "A")
+	then
+		StatusOutput.action="POST";
+end
+
+# rule values at C14, header at C6
+rule "BenefitStatus_14"
+	when
+		Status(status == "T")
+	then
+		StatusOutput.action="POST";
+end
+
+# rule values at C15, header at C6
+rule "BenefitStatus_15"
+	when
+		Status(status == "O")
+	then
+		StatusOutput.action="POST_AND_SUSPEND_PLAN";
+end
+

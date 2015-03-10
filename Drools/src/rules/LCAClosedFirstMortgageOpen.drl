@@ -1,0 +1,94 @@
+#created on: Mar 30, 2012
+package com.sample
+
+#list any import classes here.
+import com.sample.ReconciliationBean;
+
+#declare any global variables here
+
+rule "Verify 1st Mortgage Slid Code If Single update to XXXXXX"
+	salience 100
+	when 
+		$a : ReconciliationBean(slidCode == "SINGLE")
+		$b : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("56");
+		$ruleDVO.setFieldOldVale($a.getSlidCode());
+		$ruleDVO.setFieldNewValue("XXXXXX");
+		$ruleDVO.setFieldName("slidCode");
+		correctionsList.add($ruleDVO);
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);		
+end
+
+rule "Check person code is =, Change person to last digit of Mtg account #"
+	salience 90
+	when 
+		$a : ReconciliationBean(personCode == "=")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList, acctNum : firstMortgageAccountNumber)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("57");
+		$ruleDVO.setFieldOldVale($a.getPersonCode());
+		$ruleDVO.setFieldNewValue(acctNum.substring(acctNum.length()-1, acctNum.length()));
+		$ruleDVO.setFieldName("personCode");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Update Person Code on 1st Mortgage from = B, F and 0 to 9  no update needed"
+	salience 80
+	when 
+		$a : ReconciliationBean(personCode == "B" || == "F" || == "0" || == "1" || == "2" || == "3" || == "4" || == "5"  || == "6"|| == "7" || == "8" || == "9")	
+		$b : ReconciliationBean(code : personCode)
+	then 
+		$a.setPersonCode(code);
+end
+
+rule "Update Bill Mode on 1st Mortgage from 7 to 9"
+	salience 70
+	when
+		$a : ReconciliationBean(billMode == "7")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("58");
+		$ruleDVO.setFieldOldVale($a.getBillMode());
+		$ruleDVO.setFieldNewValue("9");
+		$ruleDVO.setFieldName("billMode");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Update Bill Cycle on 1st Mortgage to 000"
+	salience 60
+	when
+		$a : ReconciliationBean(billCycle == "H20" || == "H01" || == "SSR")
+		$b : ReconciliationBean(eventMap : eventMap, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 	
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("58");
+		$ruleDVO.setFieldOldVale($a.getBillCycle());
+		$ruleDVO.setFieldNewValue("000");
+		$ruleDVO.setFieldName("billCycle");
+		alltelUpdatesList.add($ruleDVO);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+/*
+rule "Note 1st Mortgage Account 'Home Asset indicators have been removed'"
+	when
+		$a : ReconciliationBean(billCycle != "H20" && != "H01" && != "SSR")
+		$b : ReconciliationBean(m1 : actionMap)
+	then 
+		$a.setNote("1st Mortgage Account Home Asset indicators have been removed");	
+		//m1.put("NOTE_UPDATE", "REPORT_AN_CORRETCION");
+end
+*/
+

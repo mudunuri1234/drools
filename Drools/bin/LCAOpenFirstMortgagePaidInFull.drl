@@ -1,0 +1,64 @@
+#created on: Mar 29, 2012
+package com.sample
+
+#list any import classes here.
+import com.sample.ReconciliationBean;
+import com.sample.RuleDVO;
+
+rule "Update Combined statement indicator on the LCA from 6 to 5 "
+	salience 100
+	when 
+		$a : ReconciliationBean(combinedStatementIndicator == 6)
+		$b : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList)
+		$ruleDVO : RuleDVO()		
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("50");
+		$ruleDVO.setFieldOldVale($a.getCombinedStatementIndicator()+"");
+		$ruleDVO.setFieldNewValue("5");
+		$ruleDVO.setFieldName("combinedStatementIndicator");
+		correctionsList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);
+end
+
+rule "Update Phone Flag on the LCA from 2 to 4"
+	salience 90
+	when 
+		$a : ReconciliationBean(phoneFlag == "2")
+		$b : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("51");
+		$ruleDVO.setFieldOldVale($a.getPhoneFlag());
+		$ruleDVO.setFieldNewValue("4");
+		$ruleDVO.setFieldName("phoneFlag");
+		correctionsList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);
+end
+
+rule "Update HAMA Indicator on the LCA from Y to N "
+	salience 80
+	when 
+		$a : ReconciliationBean(hamaIndicator != "N")
+		$b : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("52");
+		$ruleDVO.setFieldOldVale($a.getHamaIndicator());
+		$ruleDVO.setFieldNewValue("N");
+		$ruleDVO.setFieldName("hamaIndicator");
+		correctionsList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);
+end
+
+function void log(String name) {
+	System.out.println(name);
+}

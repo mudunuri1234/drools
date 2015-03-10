@@ -1,0 +1,33 @@
+package com.sample
+
+import com.sample.Applicant;
+
+rule "Is of valid age"
+	salience 10
+	no-loop true
+	when
+		$a : Applicant(age < 18)	
+	then
+		log("----- Age is ----" + $a.getAge() + "--- Name ---" + $a.getName());
+		$a.setValid(false);
+end
+
+rule "Is it a valid date"
+	salience 9
+	no-loop true
+	when
+		$a : Applicant(dateApplied > "01-jan-2009")	
+	then
+		log("----- dateApplied is ----" + $a.getDateApplied() + "--- Name ---" + $a.getName());
+		//log($a.getDateApplied()+"");
+		$a.setValid(true);		
+end
+
+
+function void log(String name) {
+	System.out.println(name);
+}
+
+
+
+

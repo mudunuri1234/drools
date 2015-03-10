@@ -1,0 +1,26 @@
+#created on: Apr 10, 2012
+package com.sample
+
+#list any import classes here.
+import com.sample.ReconciliationBean;
+import com.sample.RuleDVO;
+
+rule "Miscellaneous - Verify FORB IND on LCA, is Y or PRIN PLS FORB, on LCA, is greater than zero 0 "
+	when 
+		$a : ReconciliationBean(forbearanceIndicator == "Y" || principalPlusForberanceAmount > 0)
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList, alertsList : alertsList)
+		$ruleDVO : RuleDVO()
+	then 	
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("66");
+		$ruleDVO.setFieldOldVale($a.getQpcarIndicator());
+		$ruleDVO.setFieldNewValue("II");
+		$ruleDVO.setFieldName("QpcarIndicator");
+		alertsList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALERTS", alertsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);			
+end
+

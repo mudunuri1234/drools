@@ -1,0 +1,354 @@
+#created on: Apr 17, 2012
+package com.sample
+
+#list any import classes here.
+import com.sample.ReconciliationBean;
+import com.sample.RuleDVO;
+
+#declare any global variables here
+
+rule "Verify Prior Mortgage Balance, on LCA, should be greater than zero"
+	when 
+		$a : ReconciliationBean(priorMortgageBalance == 0)
+		$b : ReconciliationBean(eventMap : eventMap, alertsList : alertsList, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList)		
+		$c : ReconciliationBean(balance : originalMortgageBalance)
+		$ruleDVO : RuleDVO()
+	then 	 	
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("14");
+		$ruleDVO.setFieldOldVale($a.getPriorMortgageBalance()+"");
+		$ruleDVO.setFieldNewValue(balance+"");
+		$ruleDVO.setFieldName("priorMortgageBalance");
+		alertsList.add($ruleDVO);
+		correctionsList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		eventMap.put("ALERTS", alertsList);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);		
+end
+
+rule "Verify LCA Recovery Code is B, F or G and Bill Cycle is H01 or H20"
+	when 
+		$a : ReconciliationBean( (recoveryCode == "B" || == "F" || == "G") && (billCycle == "H01" || == "H20") )
+		$b : ReconciliationBean(eventMap : eventMap, shawUpdatesList : shawUpdatesList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 	
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("16");
+		$ruleDVO.setFieldOldVale($a.getBillCycle());
+		$ruleDVO.setFieldNewValue("SSR");
+		$ruleDVO.setFieldName("BillCycle");
+		alltelUpdatesList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);	
+end
+
+rule "Above Rule Plus If Combined Stmt Indicator is equal to 6 update to 5, and bill mode to 9"
+	when 
+		$a : ReconciliationBean( (recoveryCode == "B" || == "F" || == "G") && (billCycle == "H01" || == "H20") )
+		$b : ReconciliationBean( combinedStatementIndicator == 6 )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("16A");
+		$ruleDVO.setFieldOldVale($a.getCombinedStatementIndicator() + "");
+		$ruleDVO.setFieldNewValue("5");
+		$ruleDVO.setFieldName("combinedStatementIndicator");
+		alltelUpdatesList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);	
+end
+
+rule "Above 2 Rules Plus  bill mode is not 6 update bill mode to 9"
+	when 
+		$a : ReconciliationBean( (recoveryCode == "B" || == "F" || == "G") && (billCycle == "H01" || == "H20") )
+		//$b : ReconciliationBean(combinedStatementIndicator != 6)
+		$d : ReconciliationBean(billMode != "6")
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("16B");
+		$ruleDVO.setFieldOldVale($a.getBillMode());
+		$ruleDVO.setFieldNewValue("9");
+		$ruleDVO.setFieldName("BillMode");
+		alltelUpdatesList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);	
+end
+
+rule "Verify if LCA is on IBS, by validating COMB STMT IND is equal to 6"
+	when 
+		$a : ReconciliationBean(combinedStatementIndicator == 6 && lcaDue == 1 &&  billCycle != "H01")
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 	
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("17");
+		$ruleDVO.setFieldOldVale($a.getBillCycle());
+		$ruleDVO.setFieldNewValue("H01");
+		$ruleDVO.setFieldName("BillCycle");
+		alltelUpdatesList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);	
+end
+
+rule "Verify if LCA is on IBS, by validating COMB STMT IND is equal to 6 and lcaDue is 20th"
+	when 
+		$a : ReconciliationBean(combinedStatementIndicator == 6 && lcaDue == 20 &&  billCycle != "H20")
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("17A");
+		$ruleDVO.setFieldOldVale($a.getBillCycle());
+		$ruleDVO.setFieldNewValue("H20");
+		$ruleDVO.setFieldName("BillCycle");
+		alltelUpdatesList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);	
+end
+
+rule "Verify if LCA is on IBS, if COMB STMT IND is 5 update Bill Cycle on 1st Mortgage to SSR"
+	when 
+		$a : ReconciliationBean(combinedStatementIndicator == 5 && billCycle != "SSR")
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, shawUpdatesList : shawUpdatesList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("17B");
+		$ruleDVO.setFieldOldVale($a.getBillCycle());
+		$ruleDVO.setFieldNewValue("SSR");
+		$ruleDVO.setFieldName("BillCycle");
+		alltelUpdatesList.add($ruleDVO);
+		shawUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+		eventMap.put("SHAWUPDATES", shawUpdatesList);	
+end
+
+rule "Verify Bill Mode on 1st Mortgage is 6 and Bill Cycle is H01 or H20, Change QHIST to amp"
+	when 
+		$a : ReconciliationBean( (billMode == "6") && (billCycle == "H01" ||  == "H20") )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("18");
+		$ruleDVO.setFieldOldVale($a.getQhist());
+		$ruleDVO.setFieldNewValue("&");
+		$ruleDVO.setFieldName("Qhist");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify Bill Mode on 1st Mortgage is 6 and Bill Cycle is SSR then Change Bill Mode to 9 "
+	when 
+		$a : ReconciliationBean( (billMode == "6") && (billCycle == "SSR") )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 			
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("18A");
+		$ruleDVO.setFieldOldVale($a.getBillMode());
+		$ruleDVO.setFieldNewValue("9");
+		$ruleDVO.setFieldName("BillMode");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify Bill Mode on 1st Mortgage is 9 and Bill Cycle is H01 or H20 then Change Bill Mode to 7 "
+	when 
+		$a : ReconciliationBean((billMode == "9") && (billCycle == "H01" || == "H20"))
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("18B");
+		$ruleDVO.setFieldOldVale($a.getBillMode());
+		$ruleDVO.setFieldNewValue("7");
+		$ruleDVO.setFieldName("BillMode");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify Person Code is If 0 to 9 update to =  "
+	when 
+		$a : ReconciliationBean(personCode == "0" || == "1" || == "2" || == "3" || == "4" || == "5" || == "6" || == "7" || == "8" || == "9")
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("19");
+		$ruleDVO.setFieldOldVale($a.getPersonCode());
+		$ruleDVO.setFieldNewValue("=");
+		$ruleDVO.setFieldName("personCode");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+/*
+rule "Verify Person Code on 1st Mortgage billMode != 6 and personCode is 0-9 "
+	when 
+		$a : ReconciliationBean( (billMode != "6") && (personCode == "0" || == "1" || == "2" || == "3" || == "4" || == "5" || == "6" || == "7" || == "8" || == "9") )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 	
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("19A");
+		$ruleDVO.setFieldOldVale($a.getBillMode());
+		$ruleDVO.setFieldNewValue("9");
+		$ruleDVO.setFieldName("BillMode");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+*/
+
+rule "Verify Person Code, on 1st Mortgage is B or F and billCycle is H01 or H20"
+	when 
+		$a : ReconciliationBean( (personCode == "B" || == "F") && (billCycle == "H01" || == "H20") )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("19B");
+		$ruleDVO.setFieldOldVale($a.getBillCycle());
+		$ruleDVO.setFieldNewValue("SSR");
+		$ruleDVO.setFieldName("BillCycle");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("19B");
+		$ruleDVO.setFieldOldVale($a.getCombinedStatementIndicator()+"");
+		$ruleDVO.setFieldNewValue("5");
+		$ruleDVO.setFieldName("CombinedStatementIndicator");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);		
+end
+
+rule "Verify Person Code, on 1st Mortgage billMode != 6 and  personCode is B or F and billCycle is H01 or H20"
+	when 
+		$a : ReconciliationBean( (billMode != "6") && (personCode == "B" || == "F") && (billCycle == "H01" || == "H20") )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("19C");
+		$ruleDVO.setFieldOldVale($a.getBillMode());
+		$ruleDVO.setFieldNewValue("9");
+		$ruleDVO.setFieldName("BillMode");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify Property Type Code on 1st Mortgage, is 1, 2, or 3; If 4, 6 or 7 update indicators to reflect II"
+	when 
+		$a : ReconciliationBean( (propertyTypeCode == 4 || == 6 || == 7) && (qpcarIndicator != "II") )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("20");
+		$ruleDVO.setFieldOldVale($a.getQpcarIndicator());
+		$ruleDVO.setFieldNewValue("II");
+		$ruleDVO.setFieldName("QpcarIndicator");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify current Occupancy Code on 1st Mortgage is blank or null"
+	when 
+		$a : ReconciliationBean( occupancyCode == "" || occupancyCode == null )
+		$c : ReconciliationBean(eventMap : eventMap, alertsList : alertsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()		 
+	then 		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("21");
+		$ruleDVO.setFieldName("occupancyCode");
+		//alltelUpdatesList.add($ruleDVO);		
+		alertsList.add($ruleDVO);
+		eventMap.put("ALERTS", alertsList);
+		//eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify current Occupancy Code on 1st Mortgage occupancyCode is 3 and qpcarIndicator is not II "
+	when 
+		$a : ReconciliationBean( occupancyCode == "3" && qpcarIndicator != "II" )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 		
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("21A");
+		$ruleDVO.setFieldOldVale($a.getQpcarIndicator());
+		$ruleDVO.setFieldNewValue("II");
+		$ruleDVO.setFieldName("QpcarIndicator");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify Living Units on 1st Mortgage is blank or null"
+	when 
+		$a : ReconciliationBean(livingUnits == "" || livingUnits == null)
+		$c : ReconciliationBean(eventMap : eventMap, alertsList : alertsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("22");
+		$ruleDVO.setFieldName("livingUnits");
+		//alltelUpdatesList.add($ruleDVO);		
+		alertsList.add($ruleDVO);
+		eventMap.put("ALERTS", alertsList);
+		//eventMap.put("ALLTELUPDATES", alltelUpdatesList);
+end
+
+rule "Verify Living Units on 1st Mortgage is 2, 3, 4 and qpcarIndicator is not II"
+	when 
+		$a : ReconciliationBean( (livingUnits == "2" || == "3" || == "4") && (qpcarIndicator != "II") )
+		$c : ReconciliationBean(eventMap : eventMap, correctionsList : correctionsList, alltelUpdatesList : alltelUpdatesList)
+		$ruleDVO : RuleDVO()
+	then 
+		$ruleDVO = new RuleDVO();
+		$ruleDVO.setExceptioncode("22A");
+		$ruleDVO.setFieldOldVale($a.getQpcarIndicator());
+		$ruleDVO.setFieldNewValue("II");
+		$ruleDVO.setFieldName("QpcarIndicator");
+		alltelUpdatesList.add($ruleDVO);		
+		correctionsList.add($ruleDVO);
+		eventMap.put("CORRETCIONS", correctionsList);
+		eventMap.put("ALLTELUPDATES", alltelUpdatesList);		
+end
